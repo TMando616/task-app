@@ -1,0 +1,5 @@
+// 完了タスクは打ち消し線で表現
+.done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}

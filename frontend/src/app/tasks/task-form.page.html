@@ -1,0 +1,39 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <!-- 戻るボタン（/tasks へ） -->
+      <ion-back-button defaultHref="/tasks"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ editId() ? 'タスク編集' : '新規タスク' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <ion-item>
+      <ion-input
+        label="タイトル"
+        labelPlacement="floating"
+        formControlName="title"
+      ></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-textarea
+        label="本文"
+        labelPlacement="floating"
+        formControlName="body"
+        [autoGrow]="true"
+        rows="4"
+      ></ion-textarea>
+    </ion-item>
+
+    <ion-button
+      type="submit"
+      expand="block"
+      class="ion-margin-top"
+      [disabled]="loading()"
+    >
+      保存
+    </ion-button>
+  </form>
+</ion-content>

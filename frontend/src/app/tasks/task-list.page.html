@@ -1,0 +1,48 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>タスク一覧</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <!-- @for は新制御フロー。track でDOM差分の追跡キーを指定（必須）-->
+    @for (task of tasks(); track task.id) {
+      <ion-item-sliding>
+        <ion-item button (click)="openDetail(task)">
+          <!-- $event.stopPropagation で行クリック(詳細遷移)と分離 -->
+          <ion-checkbox
+            slot="start"
+            [checked]="task.done"
+            (click)="$event.stopPropagation()"
+            (ionChange)="toggleDone(task)"
+          ></ion-checkbox>
+          <ion-label [class.done]="task.done">{{ task.title }}</ion-label>
+        </ion-item>
+        <!-- 左スワイプで削除 -->
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="remove(task)">削除</ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    } @empty {
+      <!-- @empty は @for 専用。配列が空のとき表示 -->
+      <ion-item lines="none">
+        <ion-label class="ion-text-center">
+          タスクがありません。右下の＋から追加してください。
+        </ion-label>
+      </ion-item>
+    }
+  </ion-list>
+
+  <!-- 新規作成ボタン（右下固定） -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="openNew()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
