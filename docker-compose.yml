@@ -24,6 +24,22 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
 
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    volumes:
+      - ./frontend:/app/frontend
+      # ホストの node_modules でコンテナ内のものを上書きしない（OS差異対策）
+      - /app/frontend/node_modules
+    ports:
+      - "${FRONTEND_PORT:-8100}:8100"
+    environment:
+      # WSL2/Docker ではファイル変更検知にポーリングが必要
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - backend
+
   db:
     image: postgres:16-alpine
     environment:
