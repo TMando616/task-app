@@ -1,0 +1,19 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+.venv/
+
+# Node (frontend, M3以降)
+node_modules/
+frontend/www/
+frontend/.angular/
+
+# OS files
+.DS_Store
+Thumbs.db
