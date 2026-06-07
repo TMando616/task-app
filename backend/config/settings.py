@@ -4,6 +4,7 @@
 本番運用時は SECRET_KEY / DEBUG / CORS / ALLOWED_HOSTS を必ず見直すこと。
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,6 +24,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     # 自作アプリ
+    "accounts",
     "tasks",
 ]
 
@@ -85,8 +87,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- DRF ---
 REST_FRAMEWORK = {
+    # 認証方式: JWT（Authorization: Bearer <token> ヘッダで判定）
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    # 既定で「ログイン必須」。公開したいView側で個別に AllowAny を指定する
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+}
+
+# --- JWT（simplejwt）---
+# access はAPIアクセス用の短命トークン、refresh はそれを再発行するための長命トークン
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 # --- CORS（開発用：全許可。M3 でフロント接続時に origin を絞る）---
