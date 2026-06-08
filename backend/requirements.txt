@@ -4,3 +4,6 @@ djangorestframework-simplejwt==5.3.*
 django-cors-headers==4.6.*
 django-filter==24.*
 psycopg[binary]==3.2.*
+# --- テスト（開発用）---
+pytest==8.*
+pytest-django==4.*
