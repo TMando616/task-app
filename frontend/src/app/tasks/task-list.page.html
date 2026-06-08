@@ -7,6 +7,29 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  <!-- 検索バー: FormControl と連動し RxJS でインクリメンタル検索 -->
+  <ion-toolbar>
+    <ion-searchbar
+      [formControl]="searchControl"
+      placeholder="タイトル・本文を検索"
+      debounce="0"
+    ></ion-searchbar>
+  </ion-toolbar>
+  <!-- カテゴリ絞り込み -->
+  <ion-toolbar>
+    <ion-select
+      label="カテゴリ"
+      labelPlacement="fixed"
+      interface="popover"
+      [value]="categoryFilter"
+      (ionChange)="onCategoryChange($event.detail.value)"
+    >
+      <ion-select-option [value]="null">すべて</ion-select-option>
+      @for (cat of categories(); track cat.id) {
+        <ion-select-option [value]="cat.id">{{ cat.name }}</ion-select-option>
+      }
+    </ion-select>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content>
@@ -23,6 +46,10 @@
             (ionChange)="toggleDone(task)"
           ></ion-checkbox>
           <ion-label [class.done]="task.done">{{ task.title }}</ion-label>
+          <!-- カテゴリが付いていれば末尾にバッジ表示 -->
+          @if (task.category_name) {
+            <ion-note slot="end">{{ task.category_name }}</ion-note>
+          }
         </ion-item>
         <!-- 左スワイプで削除 -->
         <ion-item-options side="end">

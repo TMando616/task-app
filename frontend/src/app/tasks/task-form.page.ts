@@ -9,11 +9,14 @@ import {
   IonHeader,
   IonInput,
   IonItem,
+  IonSelect,
+  IonSelectOption,
   IonTextarea,
   IonTitle,
   IonToolbar,
 } from '@ionic/angular/standalone';
 
+import { CategoryService } from '../core/services/category.service';
 import { TaskService } from '../core/services/task.service';
 
 @Component({
@@ -31,31 +34,45 @@ import { TaskService } from '../core/services/task.service';
     IonItem,
     IonInput,
     IonTextarea,
+    IonSelect,
+    IonSelectOption,
   ],
 })
 export class TaskFormPage implements OnInit {
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
+  private categoryService = inject(CategoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   // 編集対象のID（新規なら null）。URLパラメータから判定する
   readonly editId = signal<number | null>(null);
   readonly loading = signal(false);
+  // カテゴリ選択肢（signal をそのままテンプレートで読む）
+  readonly categories = this.categoryService.categories;
 
   readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     body: [''],
+    // 任意。未選択は null（＝未分類）
+    category: [null as number | null],
   });
 
   ngOnInit(): void {
+    // 選択肢用にカテゴリ一覧を取得
+    this.categoryService.load().subscribe();
+
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       const id = Number(idParam);
       this.editId.set(id);
       // 既存タスクを取得してフォームに反映
       this.taskService.get(id).subscribe((task) => {
-        this.form.patchValue({ title: task.title, body: task.body });
+        this.form.patchValue({
+          title: task.title,
+          body: task.body,
+          category: task.category,
+        });
       });
     }
   }

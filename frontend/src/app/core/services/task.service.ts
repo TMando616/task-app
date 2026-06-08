@@ -1,9 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Paginated, Task } from '../models/task.model';
+import { Paginated, Task, TaskQuery } from '../models/task.model';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -16,10 +16,22 @@ export class TaskService {
 
   constructor(private http: HttpClient) {}
 
-  /** 一覧取得 → signal を更新。Interceptor がトークンを自動付与する。 */
-  load(): Observable<Paginated<Task>> {
+  /**
+   * 一覧取得 → signal を更新。Interceptor がトークンを自動付与する。
+   * query で検索/フィルタ/並び替え（バックエンドの django-filter に対応）。
+   */
+  load(query: TaskQuery = {}): Observable<Paginated<Task>> {
+    let params = new HttpParams();
+    // 値があるものだけクエリ文字列に積む（空文字や undefined は送らない）
+    if (query.search) params = params.set('search', query.search);
+    if (query.done !== undefined) params = params.set('done', query.done);
+    if (query.category !== undefined) {
+      params = params.set('category', query.category);
+    }
+    if (query.ordering) params = params.set('ordering', query.ordering);
+
     return this.http
-      .get<Paginated<Task>>(`${this.base}/`)
+      .get<Paginated<Task>>(`${this.base}/`, { params })
       .pipe(tap((res) => this._tasks.set(res.results)));
   }
 
@@ -29,7 +41,11 @@ export class TaskService {
   }
 
   /** 作成 → 成功したら先頭に追加（楽観的にUI更新）。 */
-  create(data: { title: string; body: string }): Observable<Task> {
+  create(data: {
+    title: string;
+    body: string;
+    category?: number | null;
+  }): Observable<Task> {
     return this.http
       .post<Task>(`${this.base}/`, data)
       .pipe(tap((created) => this._tasks.update((list) => [created, ...list])));

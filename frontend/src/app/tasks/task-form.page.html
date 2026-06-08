@@ -26,6 +26,20 @@
         rows="4"
       ></ion-textarea>
     </ion-item>
+    <ion-item>
+      <!-- カテゴリ選択（任意）。未選択は「未分類」 -->
+      <ion-select
+        label="カテゴリ"
+        labelPlacement="floating"
+        formControlName="category"
+        placeholder="未分類"
+      >
+        <ion-select-option [value]="null">未分類</ion-select-option>
+        @for (cat of categories(); track cat.id) {
+          <ion-select-option [value]="cat.id">{{ cat.name }}</ion-select-option>
+        }
+      </ion-select>
+    </ion-item>
 
     <ion-button
       type="submit"
