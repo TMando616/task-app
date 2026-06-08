@@ -14,6 +14,7 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
+  ToastController,
 } from '@ionic/angular/standalone';
 
 import { CategoryService } from '../core/services/category.service';
@@ -44,6 +45,7 @@ export class TaskFormPage implements OnInit {
   private categoryService = inject(CategoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private toastCtrl = inject(ToastController);
 
   // 編集対象のID（新規なら null）。URLパラメータから判定する
   readonly editId = signal<number | null>(null);
@@ -92,8 +94,21 @@ export class TaskFormPage implements OnInit {
       : this.taskService.create(value);
 
     request$.subscribe({
-      next: () => this.router.navigateByUrl('/tasks'),
+      next: async () => {
+        await this.showToast(id ? '更新しました' : '作成しました');
+        this.router.navigateByUrl('/tasks');
+      },
       error: () => this.loading.set(false),
     });
+  }
+
+  /** 画面下部に数秒だけ出る通知（ToastController）。 */
+  private async showToast(message: string): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 1500,
+      position: 'bottom',
+    });
+    await toast.present();
   }
 }

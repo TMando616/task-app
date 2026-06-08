@@ -33,6 +33,11 @@
 </ion-header>
 
 <ion-content>
+  <!-- 下に引っ張って更新（ion-refresher は ion-content 直下に置く） -->
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <ion-list>
     <!-- @for は新制御フロー。track でDOM差分の追跡キーを指定（必須）-->
     @for (task of tasks(); track task.id) {

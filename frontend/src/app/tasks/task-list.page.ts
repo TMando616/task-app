@@ -18,12 +18,16 @@ import {
   IonLabel,
   IonList,
   IonNote,
+  IonRefresher,
+  IonRefresherContent,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonTitle,
   IonToolbar,
+  ToastController,
 } from '@ionic/angular/standalone';
+import { RefresherCustomEvent } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, logOutOutline } from 'ionicons/icons';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
@@ -53,6 +57,8 @@ import { TaskService } from '../core/services/task.service';
     IonLabel,
     IonNote,
     IonCheckbox,
+    IonRefresher,
+    IonRefresherContent,
     IonSearchbar,
     IonSelect,
     IonSelectOption,
@@ -66,6 +72,7 @@ export class TaskListPage implements OnInit {
   private categoryService = inject(CategoryService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private toastCtrl = inject(ToastController);
 
   // サービスの signal をそのままテンプレートで購読する（tasks() / categories()）
   readonly tasks = this.taskService.tasks;
@@ -129,7 +136,30 @@ export class TaskListPage implements OnInit {
   }
 
   remove(task: Task): void {
-    this.taskService.remove(task.id).subscribe();
+    this.taskService.remove(task.id).subscribe(() => {
+      this.showToast(`「${task.title}」を削除しました`);
+    });
+  }
+
+  /**
+   * プルダウン更新（ion-refresher）。
+   * 取得完了後に event.target.complete() でスピナーを閉じる必要がある。
+   */
+  doRefresh(event: RefresherCustomEvent): void {
+    this.taskService.load(this.buildQuery()).subscribe({
+      next: () => event.target.complete(),
+      error: () => event.target.complete(),
+    });
+  }
+
+  /** 画面下部に数秒だけ出る通知（ToastController）。 */
+  private async showToast(message: string): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      position: 'bottom',
+    });
+    await toast.present();
   }
 
   logout(): void {
