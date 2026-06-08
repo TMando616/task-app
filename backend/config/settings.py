@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     # サードパーティ
     "rest_framework",
     "corsheaders",
+    "django_filters",
     # 自作アプリ
     "accounts",
     "tasks",
@@ -97,6 +98,15 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    # 一覧APIの絞り込み機能。3種類を組み合わせて使う:
+    #   - DjangoFilterBackend: ?done=true のような完全一致フィルタ（filterset_fields）
+    #   - SearchFilter:        ?search=語 で部分一致の全文検索（search_fields）
+    #   - OrderingFilter:       ?ordering=-created_at で並び替え（ordering_fields）
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ),
 }
 
 # --- JWT（simplejwt）---
