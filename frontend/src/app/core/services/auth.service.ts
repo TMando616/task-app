@@ -1,6 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  finalize,
+  map,
+  shareReplay,
+  tap,
+  throwError,
+} from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -25,6 +33,10 @@ export class AuthService {
 
   // computed: accessToken から派生する読み取り専用signal。
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
+
+  // 進行中の refresh 通信を保持する。複数APIが同時に401になっても
+  // /token/refresh/ を1回だけに集約するための「共有 Observable」。
+  private refresh$: Observable<string> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -52,9 +64,50 @@ export class AuthService {
     this.accessToken.set(null);
   }
 
+  /**
+   * refresh トークンで access トークンを再発行する。
+   *
+   * Interceptor が 401 を受けた時に呼ぶ。複数リクエストが同時に
+   * 401 になっても通信を1本にまとめるため、進行中の Observable を
+   * refresh$ にキャッシュして共有（shareReplay）する。
+   */
+  refreshAccessToken(): Observable<string> {
+    // すでに refresh 中なら、その通信に相乗りする
+    if (this.refresh$) {
+      return this.refresh$;
+    }
+
+    const refresh = localStorage.getItem(REFRESH_KEY);
+    if (!refresh) {
+      return throwError(() => new Error('refresh トークンがありません'));
+    }
+
+    this.refresh$ = this.http
+      .post<{ access: string }>(`${this.base}/token/refresh/`, { refresh })
+      .pipe(
+        map((res) => res.access),
+        tap((access) => this.storeAccess(access)),
+        // refresh も失効していたらログアウト状態に倒す
+        catchError((err) => {
+          this.logout();
+          return throwError(() => err);
+        }),
+        // 成否に関わらず通信終了でキャッシュを破棄（次回は新たに発行）
+        finalize(() => (this.refresh$ = null)),
+        // 同時購読した複数リクエストへ同じ結果を配る
+        shareReplay(1),
+      );
+
+    return this.refresh$;
+  }
+
   private storeTokens(res: TokenResponse): void {
-    localStorage.setItem(ACCESS_KEY, res.access);
     localStorage.setItem(REFRESH_KEY, res.refresh);
-    this.accessToken.set(res.access);
+    this.storeAccess(res.access);
+  }
+
+  private storeAccess(access: string): void {
+    localStorage.setItem(ACCESS_KEY, access);
+    this.accessToken.set(access);
   }
 }
